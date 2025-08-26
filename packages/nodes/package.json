@@ -1,0 +1,10 @@
+{
+  "name": "nodes",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@slack/web-api": "^7.10.0",
+    "openai": "^5.15.0"
+  }
+}

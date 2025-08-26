@@ -1,0 +1,8 @@
+{
+  "name": "workflow-empire",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

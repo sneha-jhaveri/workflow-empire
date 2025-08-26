@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import crypto from "crypto";
 import { ensureIdempotency } from "../services/idempotency";
+import { enqueueRun } from "../services/queue"; // Import the enqueueRun function
 
 const SECRET = process.env.WEBHOOK_SECRET || "defaultsecret";
 
@@ -56,7 +57,14 @@ export default async function webhookRoutes(app: FastifyInstance) {
     // Example job enqueue logic
     try {
       // Replace with actual job enqueue logic
-      console.log("Enqueuing job for provider:", provider);
+      const jobData = {
+        provider,
+        eventId,
+        workspaceId,
+        payload: request.body,
+      };
+      await enqueueRun(jobData);
+      console.log("Job enqueued successfully:", jobData);
     } catch (error) {
       console.error("Error processing webhook:", error);
       return reply.status(500).send({ error: "Failed to process webhook" });

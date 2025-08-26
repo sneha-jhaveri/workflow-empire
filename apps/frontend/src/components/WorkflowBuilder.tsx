@@ -45,6 +45,29 @@ export const WorkflowBuilder: React.FC = () => {
     }
   };
 
+  const addNode = () => {
+    const newNode = {
+      id: `node-${nodes.length + 1}`,
+      data: { label: `Node ${nodes.length + 1}` },
+      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      type: "default",
+    };
+    setNodes((prevNodes) => [...prevNodes, newNode]);
+  };
+
+  const addEdge = () => {
+    if (nodes.length < 2) {
+      alert("Add at least two nodes to create an edge.");
+      return;
+    }
+    const newEdge = {
+      id: `edge-${edges.length + 1}`,
+      source: nodes[nodes.length - 2].id,
+      target: nodes[nodes.length - 1].id,
+    };
+    setEdges((prevEdges) => [...prevEdges, newEdge]);
+  };
+
   return (
     <div style={{ height: "100vh" }} className="relative">
       <ReactFlow nodes={nodes} edges={edges} onNodeClick={handleNodeClick}>
@@ -70,6 +93,20 @@ export const WorkflowBuilder: React.FC = () => {
           ))}
         </div>
       )}
+      <div className="absolute bottom-0 left-0 p-4 bg-white shadow-md">
+        <button
+          onClick={addNode}
+          className="mr-2 px-4 py-2 bg-blue-500 text-white rounded-md"
+        >
+          Add Node
+        </button>
+        <button
+          onClick={addEdge}
+          className="px-4 py-2 bg-green-500 text-white rounded-md"
+        >
+          Add Edge
+        </button>
+      </div>
     </div>
   );
 };

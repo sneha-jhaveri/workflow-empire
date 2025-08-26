@@ -17,8 +17,9 @@ export const RunLogViewer: React.FC<{ runId: string }> = ({ runId }) => {
       setLogs((prevLogs) => [...prevLogs, log]);
     };
 
-    eventSource.onerror = () => {
-      console.error("EventSource failed.");
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      alert("Connection lost. Please refresh the page.");
       eventSource.close();
     };
 

@@ -17,5 +17,13 @@
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@types/supertest": "^6.0.3"
+  },
+  "scripts": {
+    "dev:api": "NODE_ENV=development PROCESS_ROLE=api tsx apps/backend/src/index.ts",
+    "dev:worker": "NODE_ENV=development PROCESS_ROLE=worker tsx apps/backend/src/index.ts",
+    "dev:web": "vite --host",
+    "typecheck": "tsc -b",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "vitest"
   }
 }

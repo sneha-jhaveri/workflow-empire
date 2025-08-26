@@ -1,4 +1,11 @@
 import { FastifyInstance } from "fastify";
+import { subscribeToRunUpdates } from "../services/events";
+
+interface RunUpdateEvent {
+  step: string;
+  status: string;
+  timestamp: string;
+}
 
 export async function sseRoutes(app: FastifyInstance) {
   app.get("/sse/runs/:id", async (req, reply) => {
@@ -8,18 +15,12 @@ export async function sseRoutes(app: FastifyInstance) {
     reply.raw.setHeader("Cache-Control", "no-cache");
     reply.raw.setHeader("Connection", "keep-alive");
 
-    // Simulate sending live updates
-    const interval = setInterval(() => {
-      const event = JSON.stringify({
-        step: "example-step",
-        status: "in-progress",
-        timestamp: new Date().toISOString(),
-      });
-      reply.raw.write(`data: ${event}\n\n`);
-    }, 1000);
+    const unsubscribe = subscribeToRunUpdates(id, (event: RunUpdateEvent) => {
+      reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+    });
 
     req.raw.on("close", () => {
-      clearInterval(interval);
+      unsubscribe();
       reply.raw.end();
     });
   });

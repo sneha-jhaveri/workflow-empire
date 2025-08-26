@@ -13,7 +13,8 @@
       "@ui/*": ["packages/ui-components/src/*"]
     },
     "typeRoots": ["./node_modules/@types", "./apps/backend/tests/types"],
-    "types": ["vitest"]
+    "types": ["vitest"],
+    "composite": true
   },
   "include": ["apps", "packages"]
 }

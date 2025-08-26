@@ -44,9 +44,23 @@ export default async function webhookRoutes(app: FastifyInstance) {
       return reply.status(200).send({ message: "Event already processed" });
     }
 
+    // Ensure SECRET is provided in the environment
+    if (SECRET === "defaultsecret") {
+      console.warn(
+        "Warning: Using default webhook secret. Set WEBHOOK_SECRET in the environment."
+      );
+    }
+
     // Process webhook
     console.log("Processing webhook...");
-    // TODO: Add job enqueue logic here
+    // Example job enqueue logic
+    try {
+      // Replace with actual job enqueue logic
+      console.log("Enqueuing job for provider:", provider);
+    } catch (error) {
+      console.error("Error processing webhook:", error);
+      return reply.status(500).send({ error: "Failed to process webhook" });
+    }
 
     return reply.status(202).send({ message: "Webhook accepted" });
   });

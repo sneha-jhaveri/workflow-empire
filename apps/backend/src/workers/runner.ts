@@ -1,25 +1,26 @@
-import { Worker } from "bullmq";
-import { runQueue } from "./queue";
-import { executeWorkflow } from "../services/workflowExecutor";
+import { Queue, Worker } from "bullmq";
+import { createDb } from "../db/client";
+import { executeGraph } from "../services/executionEngine";
 import { loadGraph } from "../services/workflowLoader";
-
-const connection = { url: process.env.REDIS_URL || "redis://localhost:6379" };
+import { createCtx } from "../services/context";
 
 export async function startWorker() {
+  const runQueue = new Queue("runs", {
+    connection: { url: process.env.REDIS_URL! },
+  });
+
   new Worker(
     "runs",
     async (job) => {
       const { workflowId, version, payload } = job.data;
-      const definition = await loadGraph(workflowId, version);
-      await executeWorkflow(
-        definition.nodes.map((node: any) => ({
-          type: node.type,
-          data: node.data ?? {},
-          ...node,
-        }))
-      );
+      const graph = await loadGraph(workflowId, version);
+      const ctx = await createCtx({
+        workspaceId: job.data.workspaceId,
+        payload,
+      });
+      await executeGraph(ctx, graph);
     },
-    { connection }
+    { connection: { url: process.env.REDIS_URL! } }
   );
 
   console.log("Worker started and listening for jobs...");

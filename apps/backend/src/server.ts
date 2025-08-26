@@ -1,41 +1,42 @@
-// // Server setup using Fastify or Express
-// import Fastify, { FastifyRequest, FastifyReply } from "fastify";
-
-// const server = Fastify();
-
-// server.get("/", async (request: FastifyRequest, reply: FastifyReply) => {
-//   reply.send({ message: "Hello, Workflow Empire!" });
-// });
-
-// export const startServer = async () => {
-//   try {
-//     await server.listen({ port: 3000 });
-//     console.log("Server is running on http://localhost:3000");
-//   } catch (err) {
-//     console.error(err);
-//     process.exit(1);
-//   }
-// };
-
-import Fastify from "fastify";
+import Fastify, { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import cors from "@fastify/cors";
+import { registerRoutes } from "./routes";
+import { logger } from "./services/logger";
+import { sseRoutes } from "./routes/sse";
+import { metricsPlugin } from "./services/metrics";
 
-export async function startServer() {
-  const app = Fastify({ logger: true });
-
-  // Enable CORS
-  await app.register(cors, { origin: true });
-
-  // Health check endpoint
-  app.get("/health", async () => ({ ok: true }));
-
-  // Start the server
+export async function createServer() {
   try {
-    const port = process.env.PORT || 3000;
-    await app.listen({ port: Number(port), host: "0.0.0.0" });
-    console.log(`Server is running on http://localhost:${port}`);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
+    const app: FastifyInstance = Fastify({ logger });
+    // Enable CORS
+    await app.register(cors, { origin: true });
+    // Register routes
+    await registerRoutes(app);
+    await app.register(sseRoutes);
+    await app.register(metricsPlugin);
+    // Health check endpoint
+    app.get("/health", async () => ({ ok: true }));
+
+    // Add detailed logging for debugging
+    app.addHook("onRequest", async (request, reply) => {
+      console.log("Incoming request:", {
+        method: request.method,
+        url: request.url,
+        headers: request.headers,
+      });
+    });
+
+    app.addHook("onResponse", async (request, reply) => {
+      console.log("Response sent:", {
+        statusCode: reply.statusCode,
+        url: request.url,
+      });
+    });
+
+    return app;
+  } catch (error) {
+    console.error("Error during server setup:", error);
+    throw error;
   }
 }

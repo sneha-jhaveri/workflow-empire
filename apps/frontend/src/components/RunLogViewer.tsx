@@ -1,48 +1,44 @@
 import React, { useEffect, useState } from "react";
 
-interface RunLog {
-  id: string;
+type LogEvent = {
+  step: string;
   status: string;
-  startedAt: string;
-  finishedAt: string;
-  logs: string;
-}
+  timestamp: string;
+};
 
-export const RunLogViewer: React.FC = () => {
-  const [logs, setLogs] = useState<RunLog[]>([]);
+export const RunLogViewer: React.FC<{ runId: string }> = ({ runId }) => {
+  const [logs, setLogs] = useState<LogEvent[]>([]);
 
   useEffect(() => {
-    // Fetch logs from the backend
-    const fetchLogs = async () => {
-      const response = await fetch("http://localhost:4000/api/runs");
-      const data = await response.json();
-      setLogs(data);
+    const eventSource = new EventSource(`/sse/runs/${runId}`);
+
+    eventSource.onmessage = (event) => {
+      const log: LogEvent = JSON.parse(event.data);
+      setLogs((prevLogs) => [...prevLogs, log]);
     };
 
-    fetchLogs();
-  }, []);
+    eventSource.onerror = () => {
+      console.error("EventSource failed.");
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [runId]);
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Run Logs</h2>
-      <div className="space-y-4">
-        {logs.map((log) => (
-          <div key={log.id} className="p-4 border rounded-lg bg-gray-50">
-            <p>
-              <strong>Status:</strong> {log.status}
-            </p>
-            <p>
-              <strong>Started At:</strong>{" "}
-              {new Date(log.startedAt).toLocaleString()}
-            </p>
-            <p>
-              <strong>Finished At:</strong>{" "}
-              {new Date(log.finishedAt).toLocaleString()}
-            </p>
-            <pre className="bg-gray-100 p-2 rounded mt-2">{log.logs}</pre>
-          </div>
+    <div className="p-4 bg-gray-100 rounded-lg">
+      <h2 className="text-lg font-bold mb-2">Run Logs</h2>
+      <ul className="space-y-2">
+        {logs.map((log, index) => (
+          <li key={index} className="p-2 bg-white rounded shadow">
+            <p>Step: {log.step}</p>
+            <p>Status: {log.status}</p>
+            <p>Timestamp: {new Date(log.timestamp).toLocaleString()}</p>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };

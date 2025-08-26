@@ -26,6 +26,13 @@ export const SecretsManager: React.FC = () => {
     fetchSecrets();
   };
 
+  const deleteSecret = async (id: string) => {
+    await fetch(`http://localhost:4000/api/secrets/${id}`, {
+      method: "DELETE",
+    });
+    fetchSecrets();
+  };
+
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Secrets Manager</h2>
@@ -62,6 +69,12 @@ export const SecretsManager: React.FC = () => {
             <p>
               <strong>Value:</strong> {secret.value}
             </p>
+            <button
+              onClick={() => deleteSecret(secret.id)}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              Delete
+            </button>
           </div>
         ))}
       </div>

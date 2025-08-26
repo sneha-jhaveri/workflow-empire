@@ -11,7 +11,9 @@
       "@core/*": ["packages/core/src/*"],
       "@nodes/*": ["packages/nodes/*"],
       "@ui/*": ["packages/ui-components/src/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "./apps/backend/tests/types"],
+    "types": ["vitest"]
   },
   "include": ["apps", "packages"]
 }

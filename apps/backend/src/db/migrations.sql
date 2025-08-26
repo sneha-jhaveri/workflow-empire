@@ -39,37 +39,49 @@ CREATE TABLE workflow_versions (
     UNIQUE (workflow_id, version)
 );
 
--- Run steps table
+-- Additional tables
+CREATE TABLE workspaces (
+    id uuid primary key default gen_random_uuid (),
+    name text not null,
+    created_at timestamptz not null default now()
+);
+
+CREATE TABLE users (
+    id uuid primary key default gen_random_uuid (),
+    workspace_id uuid not null references workspaces (id) on delete cascade,
+    email text unique not null,
+    role text not null default 'owner',
+    created_at timestamptz not null default now()
+);
+
 CREATE TABLE run_steps (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
-    run_id UUID NOT NULL REFERENCES workflow_runs (id) ON DELETE CASCADE,
-    node_id TEXT NOT NULL,
-    status TEXT NOT NULL,
-    started_at TIMESTAMPTZ DEFAULT now(),
-    finished_at TIMESTAMPTZ,
-    output_json JSONB,
-    logs JSONB,
-    retry_count INT DEFAULT 0
+    id uuid primary key default gen_random_uuid (),
+    run_id uuid not null references workflow_runs (id) on delete cascade,
+    node_id text not null,
+    status text not null,
+    started_at timestamptz not null default now(),
+    finished_at timestamptz,
+    output_json jsonb,
+    logs jsonb,
+    retry_count int not null default 0
 );
 
--- Connections table
 CREATE TABLE connections (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
-    workspace_id UUID NOT NULL,
-    provider TEXT NOT NULL,
-    metadata JSONB,
-    secrets_encrypted BYTEA NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE (workspace_id, provider)
+    id uuid primary key default gen_random_uuid (),
+    workspace_id uuid not null references workspaces (id) on delete cascade,
+    provider text not null,
+    metadata jsonb,
+    secrets_encrypted bytea not null,
+    created_at timestamptz not null default now(),
+    unique (workspace_id, provider)
 );
 
--- Idempotency keys table
 CREATE TABLE idempotency_keys (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
-    workspace_id UUID NOT NULL,
-    key TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE (workspace_id, key)
+    id uuid primary key default gen_random_uuid (),
+    workspace_id uuid not null references workspaces (id) on delete cascade,
+    key text not null,
+    created_at timestamptz not null default now(),
+    unique (workspace_id, key)
 );
 
 -- Indexes for performance

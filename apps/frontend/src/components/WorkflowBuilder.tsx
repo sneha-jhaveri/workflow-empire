@@ -1,11 +1,17 @@
 import React, { useState } from "react";
-import ReactFlow, { Background, Controls } from "reactflow";
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+  Node,
+  Edge,
+} from "reactflow";
 import "reactflow/dist/style.css";
 import { useWorkflowStore } from "../store/workflow";
 
 export const WorkflowBuilder: React.FC = () => {
   const workflow = useWorkflowStore((s) => s.currentWorkflow);
-  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   if (!workflow) {
     return (
@@ -15,45 +21,39 @@ export const WorkflowBuilder: React.FC = () => {
     );
   }
 
-  const elements = [
-    ...workflow.nodes.map((node) => ({
-      id: node.id,
-      data: { label: node.label },
-      position: node.position || { x: 0, y: 0 },
-      type: "default",
-    })),
-    ...workflow.edges.map((edge: { id: any; source: any; target: any }) => ({
-      id: edge.id,
-      source: edge.source,
-      target: edge.target,
-    })),
-  ];
+  const nodes: Node[] = workflow.nodes.map((node) => ({
+    id: node.id,
+    data: { label: node.label },
+    position: node.position || { x: 0, y: 0 },
+    type: "default",
+  }));
 
-  const handleNodeClick = (event: any, node: any) => {
+  const edges: Edge[] = workflow.edges.map((edge) => ({
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+  }));
+
+  const handleNodeClick = (event: any, node: Node) => {
     setSelectedNode(node);
   };
 
   const handleInputChange = (key: string, value: any) => {
     if (selectedNode) {
-      selectedNode.data[key] = value;
+      selectedNode.data = { ...selectedNode.data, [key]: value };
       setSelectedNode({ ...selectedNode });
     }
   };
 
   return (
-    <div className="h-full w-full flex">
-      <div className="flex-1">
-        <ReactFlow
-          nodes={elements.filter((el) => "data" in el)}
-          edges={elements.filter((el) => "source" in el)}
-          onNodeClick={handleNodeClick}
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
-      </div>
+    <div style={{ height: "100vh" }} className="relative">
+      <ReactFlow nodes={nodes} edges={edges} onNodeClick={handleNodeClick}>
+        <MiniMap />
+        <Controls />
+        <Background color="#aaa" gap={16} />
+      </ReactFlow>
       {selectedNode && (
-        <div className="w-1/3 p-4 bg-gray-100">
+        <div className="absolute top-0 right-0 p-4 bg-white shadow-md">
           <h3 className="font-bold text-lg mb-4">Edit Node</h3>
           {Object.keys(selectedNode.data).map((key) => (
             <div key={key} className="mb-2">

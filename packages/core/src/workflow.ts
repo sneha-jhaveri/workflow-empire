@@ -26,6 +26,8 @@ export interface WorkflowEdge {
   id: string;
   source: string; // node id
   target: string; // node id
+  condition?: (args: { ctx: any; input: any }) => Promise<boolean>;
+  to: string; // alias for target
 }
 
 // Zod schemas for validation
@@ -67,4 +69,46 @@ export const fallbackFrom = (workflow: Workflow, nodeId: string) => {
   return workflow.edges.find(
     (edge) => edge.source === nodeId && edge.target === "fallback"
   );
+};
+
+// Exporting Node and Edge types
+export type Node = WorkflowNode;
+export type Edge = WorkflowEdge;
+
+// Extending Graph with utility methods
+export type Graph = {
+  start: string;
+  nodes: Record<string, WorkflowNode>;
+  edges: WorkflowEdge[];
+  out: {
+    edgesFrom: (id: string) => WorkflowEdge[];
+    fallbackFrom: (id: string) => WorkflowEdge | undefined;
+  };
+};
+
+// Adding utility methods for Graph
+export function createGraph(graph: Omit<Graph, "out">): Graph {
+  return {
+    ...graph,
+    out: {
+      edgesFrom: (id: string) => graph.edges.filter((e) => e.source === id),
+      fallbackFrom: (id: string) =>
+        graph.edges.find((e) => e.source === id && e.target === "fallback"),
+    },
+  };
+}
+
+// Additional types for execution
+export type ExecutionContext = {
+  initial: any;
+  connectors: {
+    load: (type: string) => Promise<{ run: (args: any) => Promise<any> }>;
+  };
+  persistStep: (step: {
+    nodeId: string;
+    status: string;
+    ms: number;
+    output?: any;
+    error?: any;
+  }) => Promise<void>;
 };

@@ -1,40 +1,44 @@
-import { Router } from "express";
+import { FastifyInstance } from "fastify";
 import { db } from "../db/client";
 
-const router = Router();
+export default async function workflowsRoutes(app: FastifyInstance) {
+  // List all workflows
+  app.get("/", async () => {
+    const result = await db.query("SELECT * FROM workflows");
+    return result.rows;
+  });
 
-// List all workflows
-router.get("/", async (req, res) => {
-  const result = await db.query("SELECT * FROM workflows");
-  res.json(result.rows);
-});
+  // Create workflow
+  app.post("/", async (request) => {
+    const { name, definition } = request.body as {
+      name: string;
+      definition: any;
+    };
+    const result = await db.query(
+      "INSERT INTO workflows (name, definition) VALUES ($1, $2) RETURNING *",
+      [name, definition]
+    );
+    return result.rows[0];
+  });
 
-// Create workflow
-router.post("/", async (req, res) => {
-  const { name, definition } = req.body;
-  const result = await db.query(
-    "INSERT INTO workflows (name, definition) VALUES ($1, $2) RETURNING *",
-    [name, definition]
-  );
-  res.json(result.rows[0]);
-});
+  // Update workflow
+  app.put("/:id", async (request) => {
+    const { id } = request.params as { id: string };
+    const { name, definition } = request.body as {
+      name: string;
+      definition: any;
+    };
+    const result = await db.query(
+      "UPDATE workflows SET name=$1, definition=$2 WHERE id=$3 RETURNING *",
+      [name, definition, id]
+    );
+    return result.rows[0];
+  });
 
-// Update workflow
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { name, definition } = req.body;
-  const result = await db.query(
-    "UPDATE workflows SET name=$1, definition=$2 WHERE id=$3 RETURNING *",
-    [name, definition, id]
-  );
-  res.json(result.rows[0]);
-});
-
-// Delete workflow
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  await db.query("DELETE FROM workflows WHERE id=$1", [id]);
-  res.sendStatus(204);
-});
-
-export default router;
+  // Delete workflow
+  app.delete("/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    await db.query("DELETE FROM workflows WHERE id=$1", [id]);
+    reply.status(204).send();
+  });
+}

@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import crypto from "crypto";
-import { useIdempotency } from "../services/idempotency";
+import { ensureIdempotency } from "../services/idempotency";
 
 const SECRET = process.env.WEBHOOK_SECRET || "defaultsecret";
 
@@ -10,7 +10,15 @@ export default async function webhookRoutes(app: FastifyInstance) {
     const signature = request.headers["x-signature"] as string;
     const body = JSON.stringify(request.body);
 
+    // Add detailed logging for debugging
+    console.log("Webhook request received:", {
+      provider,
+      headers: request.headers,
+      body: request.body,
+    });
+
     // Verify signature
+    console.log("Verifying signature...");
     const hmac = crypto.createHmac("sha256", SECRET);
     hmac.update(body);
     const expectedSignature = hmac.digest("hex");
@@ -20,6 +28,7 @@ export default async function webhookRoutes(app: FastifyInstance) {
     }
 
     // Idempotency check
+    console.log("Checking idempotency...");
     const eventId = request.headers["x-event-id"] as string;
     const workspaceId = request.headers["x-workspace-id"] as string;
 
@@ -27,12 +36,16 @@ export default async function webhookRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Missing headers" });
     }
 
-    const isNew = await useIdempotency(workspaceId, `${provider}:${eventId}`);
+    const isNew = await ensureIdempotency(
+      workspaceId,
+      `${provider}:${eventId}`
+    );
     if (!isNew) {
       return reply.status(200).send({ message: "Event already processed" });
     }
 
-    // Process webhook (enqueue job, etc.)
+    // Process webhook
+    console.log("Processing webhook...");
     // TODO: Add job enqueue logic here
 
     return reply.status(202).send({ message: "Webhook accepted" });

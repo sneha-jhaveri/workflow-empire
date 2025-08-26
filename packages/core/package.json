@@ -1,6 +1,13 @@
 {
-  "name": "core",
+  "name": "core-package",
   "version": "1.0.0",
-  "main": "src/workflow.ts",
-  "license": "MIT"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
 }
